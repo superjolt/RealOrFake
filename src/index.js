@@ -3,13 +3,82 @@ const express = require('express');
 require('dotenv').config();
 const { scheduleJob } = require('node-schedule');
 const { spawn } = require('child_process');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Create Express app for keeping the bot alive
 const app = express();
 const port = 3000;
 
-app.get('/', (req, res) => {
-    res.send('Discord bot is running!');
+// Track bot status
+let startTime = Date.now();
+let lastBackupTime = null;
+let botStatus = 'offline';
+
+// Serve static files
+app.use(express.static('public'));
+
+// Status page route
+app.get('/', async (req, res) => {
+    const uptime = Math.floor((Date.now() - startTime) / 1000); // uptime in seconds
+
+    // Try to get last backup time from backup directory
+    try {
+        const backupDir = path.join(__dirname, '..', 'backups');
+        const backups = await fs.readdir(backupDir);
+        if (backups.length > 0) {
+            const latestBackup = backups.sort().reverse()[0];
+            lastBackupTime = latestBackup;
+        }
+    } catch (error) {
+        console.error('Error reading backup directory:', error);
+    }
+
+    // Send HTML response
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Discord Bot Status</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 20px auto;
+                    padding: 20px;
+                    background-color: #f5f5f5;
+                }
+                .status-card {
+                    background-color: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .status-indicator {
+                    display: inline-block;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    margin-right: 10px;
+                }
+                .online { background-color: #4CAF50; }
+                .offline { background-color: #f44336; }
+            </style>
+        </head>
+        <body>
+            <div class="status-card">
+                <h1>Discord Bot Status</h1>
+                <p>
+                    <span class="status-indicator ${botStatus === 'online' ? 'online' : 'offline'}"></span>
+                    Status: ${botStatus}
+                </p>
+                <p>Uptime: ${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s</p>
+                <p>Last Backup: ${lastBackupTime || 'No backups yet'}</p>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
 app.listen(port, '0.0.0.0', () => {
@@ -112,11 +181,13 @@ client.once('ready', () => {
     client.user.setActivity('/hi to say hello!', { type: 0 }); // 0 is for 'Playing'
     registerCommands(); // Register commands when bot is ready
     scheduleBackup(); //Schedule backup after bot is ready
+    botStatus = 'online';
 });
 
 // Add reconnection handling
 client.on('disconnect', () => {
     console.log('Bot disconnected! Attempting to reconnect...');
+    botStatus = 'offline';
 });
 
 client.on('error', error => {
