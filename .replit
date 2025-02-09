@@ -32,6 +32,7 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node src/index.js"
+waitForPort = 3000
 
 [[workflows.workflow]]
 name = "DiscordBot"
@@ -49,3 +50,7 @@ args = "node index.js"
 
 [deployment]
 run = ["sh", "-c", "node src/index.js"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80

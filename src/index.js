@@ -1,5 +1,18 @@
 const { Client, Collection, GatewayIntentBits, REST, Routes } = require('discord.js');
+const express = require('express');
 require('dotenv').config();
+
+// Create Express app for keeping the bot alive
+const app = express();
+const port = 3000;
+
+app.get('/', (req, res) => {
+    res.send('Discord bot is running!');
+});
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Web server is running on port ${port}`);
+});
 
 // Create a new client instance
 const client = new Client({
