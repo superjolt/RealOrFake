@@ -1,6 +1,8 @@
 const { Client, Collection, GatewayIntentBits, REST, Routes } = require('discord.js');
 const express = require('express');
 require('dotenv').config();
+const { scheduleJob } = require('node-schedule');
+const { spawn } = require('child_process');
 
 // Create Express app for keeping the bot alive
 const app = express();
@@ -13,6 +15,27 @@ app.get('/', (req, res) => {
 app.listen(port, '0.0.0.0', () => {
     console.log(`Web server is running on port ${port}`);
 });
+
+// Schedule daily backups
+const scheduleBackup = () => {
+    scheduleJob('0 0 * * *', () => { // Run at midnight every day
+        console.log('Starting scheduled backup...');
+        const backup = spawn('python3', ['src/backup.py']);
+
+        backup.stdout.on('data', (data) => {
+            console.log(`Backup output: ${data}`);
+        });
+
+        backup.stderr.on('data', (data) => {
+            console.error(`Backup error: ${data}`);
+        });
+
+        backup.on('close', (code) => {
+            console.log(`Backup process exited with code ${code}`);
+        });
+    });
+};
+
 
 // Create a new client instance
 const client = new Client({
@@ -88,6 +111,7 @@ client.once('ready', () => {
     console.log(`Bot is ready! Logged in as ${client.user.tag}`);
     client.user.setActivity('/hi to say hello!', { type: 0 }); // 0 is for 'Playing'
     registerCommands(); // Register commands when bot is ready
+    scheduleBackup(); //Schedule backup after bot is ready
 });
 
 // Add reconnection handling
