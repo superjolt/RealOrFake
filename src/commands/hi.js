@@ -1,21 +1,29 @@
 const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-    // Command definition
     data: new SlashCommandBuilder()
         .setName('hi')
-        .setDescription('Replies with a friendly greeting!'),
-
-    // Command execution
+        .setDescription('Responds with a friendly greeting!')
+        .setDefaultMemberPermissions(null), // This makes the command available to everyone
     async execute(interaction) {
         try {
             await interaction.reply({
-                content: `👋 Hi ${interaction.user.username}! Hope you're having a great day!`,
+                content: `👋 Hi ${interaction.user.username}! Nice to meet you!`,
                 ephemeral: false
             });
         } catch (error) {
-            console.error('Error in hi command:', error);
-            throw error; // Let the main error handler deal with it
+            console.error('Error executing hi command:', error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({
+                    content: 'There was an error executing this command!',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.reply({
+                    content: 'There was an error executing this command!',
+                    ephemeral: true
+                });
+            }
         }
     },
 };
