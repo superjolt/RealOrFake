@@ -39,8 +39,13 @@ module.exports = {
                     .setLabel('Thank you!')
                     .setStyle(ButtonStyle.Primary);
 
+                const hateButton = new ButtonBuilder()
+                    .setCustomId('hate_you')
+                    .setLabel('I hate you')
+                    .setStyle(ButtonStyle.Danger);
+
                 const row = new ActionRowBuilder()
-                    .addComponents(thankYouButton);
+                    .addComponents(thankYouButton, hateButton);
 
                 await interaction.reply({
                     files: [{
@@ -69,6 +74,11 @@ module.exports = {
                     if (i.customId === 'thank_you') {
                         await i.reply({ 
                             content: "You're welcome! 😊",
+                            ephemeral: true
+                        });
+                    } else if (i.customId === 'hate_you') {
+                        await i.reply({
+                            content: "That's not very nice! 😢",
                             ephemeral: true
                         });
                     }
