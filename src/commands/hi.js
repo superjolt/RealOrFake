@@ -2,6 +2,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
+const { db } = require('../../server/db.ts');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -34,18 +35,18 @@ module.exports = {
                 // First send the file, then create the embed
                 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
                 
-                const thankYouButton = new ButtonBuilder()
-                    .setCustomId('thank_you')
-                    .setLabel('Thank you!')
+                const realButton = new ButtonBuilder()
+                    .setCustomId('vote_real')
+                    .setLabel('I think it is real')
                     .setStyle(ButtonStyle.Primary);
 
-                const hateButton = new ButtonBuilder()
-                    .setCustomId('hate_you')
-                    .setLabel('I hate you')
+                const fakeButton = new ButtonBuilder()
+                    .setCustomId('vote_fake')
+                    .setLabel('I think it is fake')
                     .setStyle(ButtonStyle.Danger);
 
                 const row = new ActionRowBuilder()
-                    .addComponents(thankYouButton, hateButton);
+                    .addComponents(realButton, fakeButton);
 
                 await interaction.reply({
                     files: [{
@@ -70,15 +71,27 @@ module.exports = {
                     time: 60000 // Button will work for 1 minute
                 });
 
+                // Initialize vote counts for this image if they don't exist
+                if (!db[`votes_${randomImage}`]) {
+                    db[`votes_${randomImage}`] = { real: 0, fake: 0 };
+                }
+
                 collector.on('collect', async i => {
-                    if (i.customId === 'thank_you') {
-                        await i.reply({ 
-                            content: "You're welcome! 😊",
+                    const voteKey = `votes_${randomImage}`;
+                    const votes = db[voteKey];
+                    
+                    if (i.customId === 'vote_real') {
+                        votes.real += 1;
+                        db[voteKey] = votes;
+                        await i.reply({
+                            content: `Vote recorded! Current votes:\nReal: ${votes.real}\nFake: ${votes.fake}`,
                             ephemeral: true
                         });
-                    } else if (i.customId === 'hate_you') {
+                    } else if (i.customId === 'vote_fake') {
+                        votes.fake += 1;
+                        db[voteKey] = votes;
                         await i.reply({
-                            content: "That's not very nice! 😢",
+                            content: `Vote recorded! Current votes:\nReal: ${votes.real}\nFake: ${votes.fake}`,
                             ephemeral: true
                         });
                     }
