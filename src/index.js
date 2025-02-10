@@ -13,7 +13,7 @@ const port = 3000;
 // Track bot status
 let startTime = Date.now();
 let lastBackupTime = null;
-let botStatus = 'offline';
+let currentBotStatus = 'offline';
 
 // Ensure backups directory exists
 async function ensureBackupDir() {
@@ -121,8 +121,8 @@ app.get('/', async (req, res) => {
             <div class="status-card">
                 <h1>Discord Bot Status</h1>
                 <p>
-                    <span class="status-indicator ${botStatus === 'online' ? 'online' : 'offline'}"></span>
-                    Status: ${botStatus}
+                    <span class="status-indicator ${currentBotStatus === 'online' ? 'online' : 'offline'}"></span>
+                    Status: ${currentBotStatus}
                 </p>
                 <p>Uptime: <span id="uptime">calculating...</span></p>
                 <p>Last Backup: <span id="lastBackup">${lastBackupTime || 'No backups yet'}</span></p>
@@ -155,7 +155,6 @@ const scheduleBackup = () => {
         });
     });
 };
-
 
 // Create a new client instance
 const client = new Client({
@@ -231,18 +230,19 @@ client.once('ready', () => {
     console.log(`Bot is ready! Logged in as ${client.user.tag}`);
     client.user.setActivity('/hi to say hello!', { type: 0 }); // 0 is for 'Playing'
     registerCommands(); // Register commands when bot is ready
-    scheduleBackup(); //Schedule backup after bot is ready
-    botStatus = 'online';
+    scheduleBackup(); // Schedule backup after bot is ready
+    currentBotStatus = 'online';
 });
 
 // Add reconnection handling
 client.on('disconnect', () => {
     console.log('Bot disconnected! Attempting to reconnect...');
-    botStatus = 'offline';
+    currentBotStatus = 'offline';
 });
 
 client.on('error', error => {
     console.error('Discord client error:', error);
+    currentBotStatus = 'error';
 });
 
 // Login to Discord with your client's token with reconnection logic

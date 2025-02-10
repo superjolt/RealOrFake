@@ -10,9 +10,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@types/ws": "^8.5.14",
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.39.2",
     "express": "^4.21.2",
-    "node-schedule": "^2.1.1"
+    "node-schedule": "^2.1.1",
+    "ws": "^8.18.0"
   }
 }
