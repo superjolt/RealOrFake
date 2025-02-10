@@ -15,13 +15,27 @@ let startTime = Date.now();
 let lastBackupTime = null;
 let botStatus = 'offline';
 
+// Ensure backups directory exists
+async function ensureBackupDir() {
+    const backupDir = path.join(__dirname, '..', 'backups');
+    try {
+        await fs.access(backupDir);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            await fs.mkdir(backupDir, { recursive: true });
+            console.log('Created backups directory');
+        }
+    }
+}
+
+// Call this when the app starts
+ensureBackupDir();
+
 // Serve static files
 app.use(express.static('public'));
 
 // Status page route
 app.get('/', async (req, res) => {
-    const uptime = Math.floor((Date.now() - startTime) / 1000); // uptime in seconds
-
     // Try to get last backup time from backup directory
     try {
         const backupDir = path.join(__dirname, '..', 'backups');
@@ -34,7 +48,7 @@ app.get('/', async (req, res) => {
         console.error('Error reading backup directory:', error);
     }
 
-    // Send HTML response
+    // Send HTML response with auto-updating JavaScript
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -65,6 +79,43 @@ app.get('/', async (req, res) => {
                 .online { background-color: #4CAF50; }
                 .offline { background-color: #f44336; }
             </style>
+            <script>
+                // Initial start time from server
+                const startTimeMs = ${startTime};
+
+                function updateUptime() {
+                    const now = Date.now();
+                    const uptimeSeconds = Math.floor((now - startTimeMs) / 1000);
+                    const days = Math.floor(uptimeSeconds / 86400);
+                    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+                    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                    const seconds = uptimeSeconds % 60;
+
+                    const uptimeText = days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+                    document.getElementById('uptime').textContent = uptimeText;
+                }
+
+                // Update status every second
+                setInterval(updateUptime, 1000);
+
+                // Also update immediately
+                updateUptime();
+
+                // Auto-refresh backup status every minute
+                setInterval(() => {
+                    fetch(window.location.href)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const backupElement = doc.querySelector('#lastBackup');
+                            if (backupElement) {
+                                document.querySelector('#lastBackup').textContent = backupElement.textContent;
+                            }
+                        })
+                        .catch(error => console.error('Error updating backup status:', error));
+                }, 60000);
+            </script>
         </head>
         <body>
             <div class="status-card">
@@ -73,8 +124,8 @@ app.get('/', async (req, res) => {
                     <span class="status-indicator ${botStatus === 'online' ? 'online' : 'offline'}"></span>
                     Status: ${botStatus}
                 </p>
-                <p>Uptime: ${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s</p>
-                <p>Last Backup: ${lastBackupTime || 'No backups yet'}</p>
+                <p>Uptime: <span id="uptime">calculating...</span></p>
+                <p>Last Backup: <span id="lastBackup">${lastBackupTime || 'No backups yet'}</span></p>
             </div>
         </body>
         </html>
