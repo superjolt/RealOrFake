@@ -32,6 +32,16 @@ module.exports = {
                 await fs.access(imagePath);
                 
                 // First send the file, then create the embed
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+                
+                const thankYouButton = new ButtonBuilder()
+                    .setCustomId('thank_you')
+                    .setLabel('Thank you!')
+                    .setStyle(ButtonStyle.Primary);
+
+                const row = new ActionRowBuilder()
+                    .addComponents(thankYouButton);
+
                 await interaction.reply({
                     files: [{
                         attachment: imagePath,
@@ -46,7 +56,22 @@ module.exports = {
                         },
                         timestamp: new Date()
                     }],
-                    fetchReply: true // Ensures the message was sent successfully
+                    components: [row],
+                    fetchReply: true
+                });
+
+                // Create a collector for the button interaction
+                const collector = interaction.channel.createMessageComponentCollector({ 
+                    time: 60000 // Button will work for 1 minute
+                });
+
+                collector.on('collect', async i => {
+                    if (i.customId === 'thank_you') {
+                        await i.reply({ 
+                            content: "You're welcome! 😊",
+                            ephemeral: true
+                        });
+                    }
                 });
 
                 console.log(`Successfully sent image ${randomImage} from ${imagePath}`);
