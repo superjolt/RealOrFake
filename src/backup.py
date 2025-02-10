@@ -6,9 +6,14 @@ from pathlib import Path
 
 class BackupManager:
     def __init__(self, backup_dir="backups", max_backups=10):
+        # Convert backup_dir to absolute path if it's relative
+        if not os.path.isabs(backup_dir):
+            backup_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), backup_dir)
+
         self.backup_dir = Path(backup_dir)
         self.max_backups = max_backups
-        self.backup_dir.mkdir(exist_ok=True)
+        # Create backup directory and any necessary parent directories
+        os.makedirs(self.backup_dir, exist_ok=True)
     
     def create_backup(self):
         """Create a new backup of bot configuration and data"""
@@ -31,7 +36,7 @@ class BackupManager:
                 "backup_items": [".env", "commands"],
                 "version": "1.0"
             }
-            
+
             with open(backup_path / "manifest.json", "w") as f:
                 json.dump(manifest, f, indent=2)
 
