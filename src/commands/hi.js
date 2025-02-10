@@ -27,20 +27,20 @@ module.exports = {
             const randomImage = dogImages[Math.floor(Math.random() * dogImages.length)];
             const imagePath = path.join(imagesDir, randomImage);
 
-            // Create embed with the image
-            const embed = new EmbedBuilder()
-                .setColor(0x0099FF)
-                .setTitle('Hello! 🐕')
-                .setDescription('Here\'s a friendly dog to brighten your day!')
-                .setImage(`attachment://${randomImage}`)
-                .setTimestamp();
-
-            // Send the reply with the embed and file attachment
+            // First send the file, then create the embed
             await interaction.reply({
-                embeds: [embed],
                 files: [{
                     attachment: imagePath,
                     name: randomImage
+                }],
+                embeds: [{
+                    color: 0x0099FF,
+                    title: 'Hello! 🐕',
+                    description: 'Here\'s a friendly dog to brighten your day!',
+                    image: {
+                        url: `attachment://${randomImage}`
+                    },
+                    timestamp: new Date()
                 }]
             });
         } catch (error) {
