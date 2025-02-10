@@ -12,7 +12,10 @@ module.exports = {
             // Get list of dog images
             const imagesDir = path.join(__dirname, '..', '..', 'attached_assets');
             const files = await fs.readdir(imagesDir);
-            const dogImages = files.filter(file => file.toLowerCase().includes('dog') && file.endsWith('.png'));
+            const dogImages = files.filter(file => 
+                file.toLowerCase().includes('dog') && 
+                (file.endsWith('.png') || file.endsWith('.jpg'))
+            );
 
             if (dogImages.length === 0) {
                 console.error('No dog images found in directory:', imagesDir);
