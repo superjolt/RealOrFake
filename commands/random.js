@@ -1,14 +1,14 @@
-//const lib = require('fs');
+const lib = require('fs');
 
-//readFile( Path, Options, Callback);
+readFile( Path, Options, Callback);
 
-//fs.readFile('links.txt', (err, data) => {
-//    if (err) throw err;
-//  
-//    console.log(data.toString());
-//});
+fs.readFile('links.txt', (err, data) => {
+    if (err) throw err;
+  
+    console.log(data.toString());
+});
 
-let list = ["link1", "link2", "link3"]
+let list = data
 
 console.log(list[Math.floor(Math.random() * (list.length - 1))])
 
